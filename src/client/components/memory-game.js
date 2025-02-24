@@ -8,6 +8,7 @@ class MemoryGame extends HTMLElement {
     this._currentPlayer = 0
     this._playerNumber = 0
     this._revealedTiles = new Map() // position : emoji
+    this._isProcessingMove = false
   }
 
   connectedCallback() {
@@ -110,6 +111,21 @@ class MemoryGame extends HTMLElement {
     this._mode = 'opponent_left'
   }
 
+  handleTileClick(tile) {
+    const isCurrentPlayer = this._currentPlayer === this._playerNumber
+    
+    if (isCurrentPlayer && !this._isProcessingMove) {
+      const position = Number.parseInt(tile.dataset.position)
+      if (!tile.classList.contains('revealed') && !tile.classList.contains('matched')) {
+        this._isProcessingMove = true
+        ws.send(JSON.stringify({ type: 'move', position }))
+        setTimeout(() => {
+          this._isProcessingMove = false
+        }, 1000)
+      }
+    }
+  }
+
   render() {
     switch (this._mode) {
       case 'init':
@@ -194,21 +210,7 @@ class MemoryGame extends HTMLElement {
 
       // Add click listeners only once
       this.querySelectorAll('.tile').forEach((tile) => {
-        tile.addEventListener('click', () => {
-          const isCurrentPlayer = this._currentPlayer === this._playerNumber
-
-          console.log(
-            'Tile clicked, isCurrentPlayer:',
-            isCurrentPlayer,
-            'playerNumber:',
-            this._playerNumber
-          )
-
-          if (isCurrentPlayer) {
-            const position = Number.parseInt(tile.dataset.position)
-            ws.send(JSON.stringify({ type: 'move', position }))
-          }
-        })
+        tile.addEventListener('click', () => this.handleTileClick(tile))
       })
     } else {
       // Just update the turn indicator

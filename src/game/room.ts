@@ -49,49 +49,56 @@ export class GameRoom {
   }
 
   handleMove(player: Player, position: number) {
-    console.log('handleMove', player, position)
     if (
       player !== this.players[this.currentPlayerIndex] ||
       this.revealedTiles.has(position)
     ) {
-      console.log('handleMove', player, position, 'invalid')
       return
     }
 
-    console.log('handleMove', player, position, 'valid')
-
     if (this.firstMove === null) {
+      // First tile of the turn
       this.firstMove = position
       this.revealedTiles.add(position)
       this.revealTile(position)
-      this.nextTurn()
-    } else {
+    } else if (this.secondMove === null) {
+      // Second tile of the turn
+      this.secondMove = position
       this.revealedTiles.add(position)
       this.revealTile(position)
-      if (this.board[this.firstMove] === this.board[position]) {
-        player.score++
-        this.players.forEach((p) => {
-          p.send({
-            type: 'match',
-            positions: [this.firstMove, position],
-            currentPlayer: this.currentPlayerIndex,
-          })
-        })
-        this.nextTurn()
-      } else {
-        const firstPosition = this.firstMove
-        setTimeout(() => {
-          this.revealedTiles.delete(firstPosition)
-          this.revealedTiles.delete(position)
-          this.hideTiles([firstPosition, position])
-          this.nextTurn()
-        }, 1000)
-      }
-      this.firstMove = null
-    }
 
-    if (this.isGameOver()) {
-      this.endGame()
+      // Check for match
+      setTimeout(() => {
+        if (this.board[this.firstMove!] === this.board[this.secondMove!]) {
+          // Match found
+          player.score++
+          this.players.forEach((p) => {
+            p.send({
+              type: 'match',
+              positions: [this.firstMove, this.secondMove],
+              currentPlayer: this.currentPlayerIndex,
+            })
+          })
+          // Current player continues their turn
+        } else {
+          // No match
+          this.revealedTiles.delete(this.firstMove!)
+          this.revealedTiles.delete(this.secondMove!)
+          this.hideTiles([this.firstMove!, this.secondMove!])
+          // Switch to other player
+          this.currentPlayerIndex = 1 - this.currentPlayerIndex
+          this.players.forEach((p) => {
+            p.send({ type: 'next_turn', currentPlayer: this.currentPlayerIndex })
+          })
+        }
+        // Reset moves for next turn
+        this.firstMove = null
+        this.secondMove = null
+
+        if (this.isGameOver()) {
+          this.endGame()
+        }
+      }, 1000)
     }
   }
 
