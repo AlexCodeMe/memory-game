@@ -136,7 +136,11 @@ class MemoryGame extends HTMLElement {
         <h2>Enter your username</h2>
         <form class='username-form'>
           <div class='form-field'>
-            <input type='text' name='username' placeholder='Username' required />
+            <input 
+              type='text' 
+              name='username' 
+              placeholder='Username' 
+              required />
           </div>
           <div class='form-field'>
             <label for="boardSize">Board Size:</label>

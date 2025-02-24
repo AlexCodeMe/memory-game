@@ -7,6 +7,7 @@ export class GameRoom {
   private revealedTiles: Set<number> = new Set()
   private currentPlayerIndex = 0
   private firstMove: number | null = null
+  private secondMove: number | null = null
   private boardSize: number
 
   constructor(boardSize: number = 6) {
